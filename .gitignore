@@ -13,7 +13,6 @@ compileCircuit.sh
 cache
 artifacts
 statics
-test
 
 .DS_Store
 */.env

@@ -277,4 +277,13 @@ contract UpdateGuardianVerifier {
             return false;
         }
     }
+
+    function testVerifyProof(
+            uint[2] memory a,
+            uint[2][2] memory b,
+            uint[2] memory c,
+            uint[6] memory input
+        ) public view {
+        require(verifyProof(a,b,c,input), "test failed");
+    }
 }
