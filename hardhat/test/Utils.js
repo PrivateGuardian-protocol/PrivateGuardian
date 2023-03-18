@@ -44,6 +44,41 @@ const generateUpdateGuardianProof = async (
   };
 };
 
+const generateSocialRecoveryProof = async (
+    siblings,
+    pubKey,
+    indexOfGuardian,
+    sig,
+    hashOfNewOwner,
+    merkleRoot,
+  ) => {
+    // depth of smt : 10
+    const length = 10 - siblings.length;
+    for (let i = 0; i < length; i++) {
+      siblings.push(BigInt(0));
+    }
+  
+    const input = {
+        siblings: siblings,
+        pubKey: pubKey,
+        indexOfGuardian: indexOfGuardian,
+        sig: [sig.S, sig.R8[0], sig.R8[1]],
+        hashOfNewOwner: hashOfNewOwner,
+        merkleRoot: merkleRoot,
+    };
+  
+    const result = await groth16.fullProve(
+      input,
+      "./statics/SocialRecovery.wasm",
+      "./statics/SocialRecovery.zkey"
+    );
+  
+    return {
+      public: result.publicSignals,
+      proof: packToSolidityProof(result.proof),
+    };
+  };
+
 const fulfillSiblings = (siblings) => {
   const length = 10 - siblings.length;
   for (let i = 0; i < length; i++) {
@@ -108,6 +143,7 @@ async function getInput(public, proof) {
 
 module.exports = {
   generateUpdateGuardianProof,
+  generateSocialRecoveryProof,
   unstringifyBigInts,
   getInput
 };

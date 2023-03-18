@@ -3,6 +3,7 @@ const { groth16 } = require("snarkjs");
 const { run, ethers } = require("hardhat");
 const {
   generateUpdateGuardianProof,
+  generateSocialRecoveryProof
 } = require("./Utils");
 const { genPrivKey } = require("maci-crypto");
 const { eddsa, poseidon, smt } = require("circomlib");
@@ -15,6 +16,7 @@ describe("test", function () {
   let prvA;
   let prvB;
   let prvC;
+  let newPrvA;
 
   before(async () => {
     // create private keys
@@ -27,11 +29,13 @@ describe("test", function () {
     await tree.insert(0, eddsa.prv2pub(prvA)[0]);
     await tree.insert(1, eddsa.prv2pub(prvB)[0]);
     await tree.insert(2, eddsa.prv2pub(prvC)[0]);
-
+    console.log("old root: "+tree.root)
     // deploy contracts
     const contracts = await run("deploy", {});
     updateGuardianVerifier = contracts.updateGuardianVerifierIns;
+    socialRecoveryVerifier = contracts.socialRecoveryVerifierIns;
     console.log('updateGuardianVerifier address is: '+updateGuardianVerifier.address)
+    console.log('socialRecoveryVerifier address is: '+socialRecoveryVerifier.address)
     owner = (await ethers.getSigner()).address; // for token transfer
   });
 
@@ -40,7 +44,8 @@ describe("test", function () {
       // new A key
       const newPrv = genPrivKey().toString();
       const newPub = eddsa.prv2pub(newPrv);
-      const sig = eddsa.signMiMC(prvA, newPub[0]);   
+      const sig = eddsa.signMiMC(prvA, newPub[0]); 
+      newPrvA = newPrv; 
       
       // A index is 0
       const res = await tree.update(0, newPub[0]);
@@ -59,6 +64,35 @@ describe("test", function () {
       const b = [[proof[2], proof[3]], [proof[4], proof[5]]];
       const c = [proof[6], proof[7]];
       await updateGuardianVerifier.testVerifyProof(a,b,c,public);
+      await expect(updateGuardianVerifier.testVerifyProof(
+        [0,0],[[0,0], [0,0]],[0,0],public)).to.be
+        .reverted;
     })
+    it("Verify Social Recovey Proof From GuardianB", async () => {
+      const pubKey = eddsa.prv2pub(prvB);
+      const signers = await ethers.getSigners();
+      const newOwnerAddress = signers[1].address;
+      const hashOfNewOwner = poseidon([newOwnerAddress]);
+      const sig = eddsa.signMiMC(prvB, hashOfNewOwner);
+      const res = await tree.find(1);
+
+      const { public, proof } = await generateSocialRecoveryProof(
+        res.siblings,
+        pubKey,
+        1,
+        sig,
+        hashOfNewOwner,
+        tree.root,
+      );
+
+      // Re-construct the a, b, c parameters for the verification
+      const a = [proof[0], proof[1]];
+      const b = [[proof[2], proof[3]], [proof[4], proof[5]]];
+      const c = [proof[6], proof[7]];
+      await socialRecoveryVerifier.testVerifyProof(a,b,c,public);
+      await expect(socialRecoveryVerifier.testVerifyProof(
+        [0,0],[[0,0], [0,0]],[0,0,],public)).to.be
+        .reverted;
+    });
   });
 });

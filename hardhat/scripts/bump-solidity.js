@@ -4,7 +4,7 @@ const solidityRegex2 = /pragma solidity >=\d+\.\d+\.\d+ <\d+\.\d+\.\d+/ // >=0.7
 const verifierRegex = /contract (Verifier|PlonkVerifier)/
 
 // [assignment] add your own scripts below to modify the other verifier contracts you will build during the assignment
-let contracts = ['UpdateGuardianVerifier'];
+let contracts = ['UpdateGuardianVerifier', 'SocialRecoveryVerifier'];
 
 contracts.forEach(contract => {
   let content = fs.readFileSync(`./contracts/libraries/${contract}.sol`, { encoding: 'utf-8' });
