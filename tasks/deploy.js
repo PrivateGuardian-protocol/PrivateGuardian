@@ -5,7 +5,7 @@ task("deploy", "Deploy Guardian verifier contract")
     .addOptionalParam("updateGuardianVerifier", "UpdateGuardianVerifier contract address", undefined, types.string)
     .addOptionalParam("socialRecoveryVerifier", "socialRecoveryVerifier contract address", undefined, types.string)
     .setAction(async ({ updateGuardianVerifier, socialRecoveryVerifier }, { ethers, _ }) => {
-        
+
         if (!updateGuardianVerifier) {
             const UpdateGuardianVerifier = await ethers.getContractFactory("UpdateGuardianVerifier");
             const _updateGuardianVerifier = await UpdateGuardianVerifier.deploy();
@@ -27,7 +27,7 @@ task("deploy", "Deploy Guardian verifier contract")
         const socialRecoveryVerifierIns = await hre.ethers.getContractAt("SocialRecoveryVerifier", socialRecoveryVerifier);
         // console.log("updateGuardianVerifierIns's address is: "+updateGuardianVerifierIns.address)
         return {
-            updateGuardianVerifierIns, 
+            updateGuardianVerifierIns,
             socialRecoveryVerifierIns
         };
     });

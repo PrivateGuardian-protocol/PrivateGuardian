@@ -1,12 +1,4 @@
-const { ZqField } = require("ffjavascript");
 const { groth16 } = require("snarkjs");
-const { poseidon } = require("circomlibjs");
-
-// Creates the finite field
-const SNARK_FIELD_SIZE = BigInt(
-  "21888242871839275222246405745257275088548364400416034343698204186575808495617"
-);
-const Fq = new ZqField(SNARK_FIELD_SIZE);
 
 const generateUpdateGuardianProof = async (
   siblings,
@@ -57,7 +49,7 @@ const generateSocialRecoveryProof = async (
     for (let i = 0; i < length; i++) {
       siblings.push(BigInt(0));
     }
-  
+
     const input = {
         siblings: siblings,
         pubKey: pubKey,
@@ -66,13 +58,13 @@ const generateSocialRecoveryProof = async (
         hashOfNewOwner: hashOfNewOwner,
         merkleRoot: merkleRoot,
     };
-  
+
     const result = await groth16.fullProve(
       input,
       "./statics/SocialRecovery.wasm",
       "./statics/SocialRecovery.zkey"
     );
-  
+
     return {
       public: result.publicSignals,
       proof: packToSolidityProof(result.proof),

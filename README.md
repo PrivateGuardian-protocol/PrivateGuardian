@@ -33,29 +33,29 @@ If the user later leaks private key of their account, they will ask the guardian
 The approach without zero-knowledge proof places the Ethereum address of the `guardian` in plain text on-chain. We seek to instead keep the `guardian` address private, whilst still allowing social recovery functionality.
 
 - single address as a guardian
-    
+
     To do this, when a user is adding a `guardian`, they instead pass the hash of the `guardian` address into adding guardian function and it is stored on-chain.
-    
+
     Then when the guardian later comes to transfer ownership of their wallet, the guardian will generate a zk proof locally to prove that they know the preimage (the input address) to the `guardian` hash that is stored on chain. This proof is then passed to recover function, instead of passing a signature as in standard social recovery.
-    
+
     The proof is validated on chain by a proof validator contract, and if successful, the usual recovery process occurs - giving the user access to their account again.
-    
+
 - multiple address as guardians
-    
-    To prevent single point of failure, the user is adding a list of members as guardians and when   number of members approving recovery passes certain threshold, the recovery process can be triggered. The only two states stored on-chain are merkle root which identifies the uniqueness of guardian addresses, as well as the approval threshold. 
-    
+
+    To prevent single point of failure, the user is adding a list of members as guardians and when   number of members approving recovery passes certain threshold, the recovery process can be triggered. The only two states stored on-chain are merkle root which identifies the uniqueness of guardian addresses, as well as the approval threshold.
+
     The proof system contains two parts:
-    
+
     - The updating of guardian members
-        
+
         Every member generates a pair of private key and public key then public keys are kept as leaf nodes of the merkle tree. Any member is allowed to update their public key. The process first requires proof of membership in the current merkle tree and then a valid update of the public key leaf node in question.
-        
+
     - The recovery process
-        
+
         When it comes to transferring the ownership of wallet by the guardians, the guardians will generate a zk proof locally to prove that they sign the preimage (the new owner address) with the public keys aligning with the merkle root that is stored on chain. This proof is then passed to recover function `Wallet.recover()`.
-        
+
         The proof is validated on chain by a proof validator contract, and if successful, the valid request of transferring ownership from this guardian would update the total approval by adding one. Finally, if total approval passes the threshold, then usual recovery process occurs - transfer ownership of the wallet to the new owner address.
-        
+
 
 To demonstrate this functionality,  we have implemented a basic proof of concept project **PrivateGuardian** by making use of a `groth16` zkSNARK via the `circom` tooling.  In **PrivateGuardian**, we choose the scheme of “multiple address as guardians”.
 
