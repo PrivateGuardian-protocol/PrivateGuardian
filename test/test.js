@@ -5,7 +5,7 @@ const {
   generateSocialRecoveryProof
 } = require("./Utils");
 const { genPrivKey } = require("maci-crypto");
-const { eddsa, poseidon, smt } = require("circomlib");
+const { eddsa, poseidon, smt } = require("circomlibjs");
 
 describe("test", function () {
   let owner;
@@ -62,10 +62,9 @@ describe("test", function () {
       const a = [proof[0], proof[1]];
       const b = [[proof[2], proof[3]], [proof[4], proof[5]]];
       const c = [proof[6], proof[7]];
-      await updateGuardianVerifier.testVerifyProof(a,b,c,public);
-      await expect(updateGuardianVerifier.testVerifyProof(
-        [0,0],[[0,0], [0,0]],[0,0],public)).to.be
-        .reverted;
+      expect(await updateGuardianVerifier.verifyProof(a,b,c,public)).to.equal(true);
+      expect(await updateGuardianVerifier.verifyProof(
+        [0,0],[[0,0], [0,0]],[0,0],public)).to.equal(false);
     })
     it("Verify Social Recovey Proof From GuardianB", async () => {
       const pubKey = eddsa.prv2pub(prvB);
@@ -88,10 +87,9 @@ describe("test", function () {
       const a = [proof[0], proof[1]];
       const b = [[proof[2], proof[3]], [proof[4], proof[5]]];
       const c = [proof[6], proof[7]];
-      await socialRecoveryVerifier.testVerifyProof(a,b,c,public);
-      await expect(socialRecoveryVerifier.testVerifyProof(
-        [0,0],[[0,0], [0,0]],[0,0,],public)).to.be
-        .reverted;
+      expect(await socialRecoveryVerifier.verifyProof(a,b,c,public)).to.equal(true);
+      expect(await socialRecoveryVerifier.verifyProof(
+        [0,0],[[0,0], [0,0]],[0,0,],public)).to.equal(false);
     });
   });
 });
