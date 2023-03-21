@@ -25,8 +25,8 @@ const generateUpdateGuardianProof = async (
 
   const result = await groth16.fullProve(
     input,
-    "./statics/UpdateGuardian.wasm",
-    "./statics/UpdateGuardian.zkey"
+    "./hardhat/statics/UpdateGuardian.wasm",
+    "./hardhat/statics/UpdateGuardian.zkey"
   );
 
   return {
@@ -61,8 +61,8 @@ const generateSocialRecoveryProof = async (
 
     const result = await groth16.fullProve(
       input,
-      "./statics/SocialRecovery.wasm",
-      "./statics/SocialRecovery.zkey"
+      "./hardhat/statics/SocialRecovery.wasm",
+      "./hardhat/statics/SocialRecovery_0000.zkey"
     );
 
     return {

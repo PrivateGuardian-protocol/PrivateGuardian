@@ -18,7 +18,7 @@ import "./GuardianStorage.sol";
   *  has execute, eth handling methods
   *  has a single signer that can send requests through the entryPoint.
   */
-contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
+contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     using ECDSA for bytes32;
     using GuardianStorage for GuardianStorage.Layout;
 
@@ -32,7 +32,7 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
 
     IEntryPoint private immutable _entryPoint;
 
-    event PrivacyAccountInitialized(IEntryPoint indexed entryPoint, address indexed owner);
+    event PrivateRecoveryAccountInitialized(IEntryPoint indexed entryPoint, address indexed owner);
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -84,7 +84,7 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
 
     /**
      * @dev The _entryPoint member is immutable, to reduce gas consumption.  To upgrade EntryPoint,
-     * a new implementation of PrivacyAccount must be deployed with the new EntryPoint address, then upgrading
+     * a new implementation of PrivateRecoveryAccount must be deployed with the new EntryPoint address, then upgrading
       * the implementation by calling `upgradeTo()`
      */
     function initialize(address anOwner) public virtual initializer {
@@ -93,7 +93,7 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
 
     function _initialize(address anOwner) internal virtual {
         owner = anOwner;
-        emit PrivacyAccountInitialized(_entryPoint, owner);
+        emit PrivateRecoveryAccountInitialized(_entryPoint, owner);
     }
 
     // Require the function call went through EntryPoint or owner
@@ -152,17 +152,25 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
         _onlyOwner();
     }
 
+    function getGuardians() external view returns (uint[] memory) {
+        GuardianStorage.layout().getGuardians();
+    }
+
     function initilizeGuardians(
       uint[] memory guardians,
       uint vote_threshold,
-      IUpdateGuardianVerifier updateGuardianVerifier,
-      ISocialRecoveryVerifier socialRecoveryVerifier
-    ) external {
+      uint root,
+      address updateGuardianVerifierAddress,
+      address socialRecoveryVerifierAddress,
+      address poseidonContractAddress
+    ) external onlyOwner {
       GuardianStorage.layout().initialize(
         guardians,
         vote_threshold,
-        updateGuardianVerifier,
-        socialRecoveryVerifier
+        root,
+        updateGuardianVerifierAddress,
+        socialRecoveryVerifierAddress ,
+        poseidonContractAddress
       );
     }
 
@@ -182,7 +190,7 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
       uint[2] memory c,
       uint[3] memory input
     ) external returns (bool valid, bool update) {
-      (valid, update) = GuardianStorage.layout().recover(a, b, c, input);
+      (valid, update) = GuardianStorage.layout().recover(a, b, c, input, newOwner);
       if(valid && update) {
         owner = newOwner;
       }
