@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const { groth16 } = require("snarkjs");
 const { run, ethers } = require("hardhat");
 const {
   generateUpdateGuardianProof,
@@ -44,9 +43,9 @@ describe("test", function () {
       // new A key
       const newPrv = genPrivKey().toString();
       const newPub = eddsa.prv2pub(newPrv);
-      const sig = eddsa.signMiMC(prvA, newPub[0]); 
-      newPrvA = newPrv; 
-      
+      const sig = eddsa.signMiMC(prvA, newPub[0]);
+      newPrvA = newPrv;
+
       // A index is 0
       const res = await tree.update(0, newPub[0]);
 

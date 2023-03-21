@@ -1,11 +1,11 @@
 pragma circom 2.0.0;
 
-include "./node_modules/circomlib/circuits/smt/smtprocessor.circom";
-include "./node_modules/circomlib/circuits/poseidon.circom";
-include "./node_modules/circomlib/circuits/eddsamimc.circom";
+include "../node_modules/circomlib/circuits/smt/smtprocessor.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/eddsamimc.circom";
 
 template UpdateGuardian(nLevels) {
-    
+
     // private signal
     signal input siblings[nLevels];
     signal input sig[3]; // EdDSAMiMCVerifier
@@ -27,7 +27,7 @@ template UpdateGuardian(nLevels) {
 
     component verifyUpdate = SMTProcessor(nLevels);
     verifyUpdate.oldRoot <== oldRoot;
-    
+
     var i;
     for (i = 0; i < nLevels; i++) {
         verifyUpdate.siblings[i] <== siblings[i];

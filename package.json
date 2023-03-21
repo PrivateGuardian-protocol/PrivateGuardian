@@ -1,0 +1,39 @@
+{
+  "name": "private-guardian",
+  "version": "0.0.1",
+  "description": "PrivateGuardian to create and verify zero-knowledge proofs for contract wallet guardian.",
+  "scripts": {
+    "test": "npx hardhat test",
+    "deploy-local": "npx hardhat run scripts/thirdweb.js --network localhost && npx hardhat run scripts/verifier.js --network localhost"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PrivateGuardian-protocol/PrivateGuardian.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PrivateGuardian-protocol/PrivateGuardian/issues"
+  },
+  "homepage": "https://github.com/PrivateGuardian-protocol/PrivateGuardian#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^4.8.2",
+    "@openzeppelin/test-helpers": "^0.5.16",
+    "@thirdweb-dev/contracts": "^3.2.10",
+    "big-integer": "^1.6.51",
+    "chai": "^4.3.7",
+    "circomlibjs": "^0.1.7",
+    "dotenv": "^16.0.3",
+    "ethers": "^5",
+    "ffjavascript": "^0.2.57",
+    "hardhat": "^2.13.0",
+    "maci-crypto": "^0.10.0",
+    "maci-domainobjs": "^1.1.1",
+    "snarkjs": "^0.5.0"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5"
+  }
+}
