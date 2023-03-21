@@ -152,17 +152,25 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
         _onlyOwner();
     }
 
+    function getGuardians() external view returns (uint[] memory) {
+        GuardianStorage.layout().getGuardians();
+    }
+
     function initilizeGuardians(
       uint[] memory guardians,
       uint vote_threshold,
-      IUpdateGuardianVerifier updateGuardianVerifier,
-      ISocialRecoveryVerifier socialRecoveryVerifier
+      uint root,
+      address updateGuardianVerifierAddress,
+      address socialRecoveryVerifierAddress,
+      address poseidonContractAddress
     ) external {
       GuardianStorage.layout().initialize(
         guardians,
         vote_threshold,
-        updateGuardianVerifier,
-        socialRecoveryVerifier
+        root,
+        updateGuardianVerifierAddress,
+        socialRecoveryVerifierAddress ,
+        poseidonContractAddress
       );
     }
 
@@ -182,7 +190,8 @@ contract PrivacyAccount is BaseAccount, UUPSUpgradeable, Initializable {
       uint[2] memory c,
       uint[3] memory input
     ) external returns (bool valid, bool update) {
-      (valid, update) = GuardianStorage.layout().recover(a, b, c, input);
+      (valid, update) = GuardianStorage.layout().recover(a, b, c, input, newOwner);
+
       if(valid && update) {
         owner = newOwner;
       }
