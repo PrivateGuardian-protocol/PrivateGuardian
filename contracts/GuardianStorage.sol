@@ -11,6 +11,7 @@ library GuardianStorage {
   using EnumerableMap for EnumerableMap.UintToUintMap;
 
   bytes32 private constant GUARDIANS_SLOT = keccak256("accountjs.contracts.GuardiansStorage");
+
   uint8 constant MAX_GUARDIANS_NUM = 7;
 
   struct Layout {
@@ -35,8 +36,11 @@ library GuardianStorage {
     // update guardian verifier contract
     IUpdateGuardianVerifier updateGuardianVerifier;
 
-    // poseidon hasher verifier contract
+    // social recover verifier contract
     ISocialRecoveryVerifier socialRecoveryVerifier;
+
+    // poseidon hasher verifier contract
+    IPoseidonHasher hasher;
   }
 
   function layout() internal pure returns (Layout storage l) {
@@ -106,13 +110,14 @@ library GuardianStorage {
     require(input[0] == l.hasher.poseidon1(newOwnerUint), "Wrong owner");
 
     if(!l.recover_nullifier_set.contains(nullifier)) {
+      // proof is not replay
       if(l.socialRecoveryVerifier.verifyProof(a, b, c, input)) {
         // proof is valid
         l.cur_vote += 1;
-
         if(l.cur_vote >= l.vote_threshold) {
           // Threshold reached
           l.cur_vote = 0;
+
           for(uint i = 0; i< l.recover_nullifier_set.length(); i++) {
             (uint n, ) = l.recover_nullifier_set.at(i);
             l.recover_nullifier_set.remove(n);
