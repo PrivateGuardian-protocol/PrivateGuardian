@@ -53,8 +53,11 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 
-    constructor(IEntryPoint anEntryPoint) {
-        _entryPoint = anEntryPoint;
+    // For test
+    // constructor(IEntryPoint anEntryPoint) {
+    constructor(address entryPointAddress) {
+        // _entryPoint = anEntryPoint;
+         _entryPoint = IEntryPoint(entryPointAddress);
         _disableInitializers();
     }
 
@@ -153,7 +156,7 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     function getGuardians() external view returns (uint[] memory) {
-        GuardianStorage.layout().getGuardians();
+        return GuardianStorage.layout().getGuardians();
     }
 
     function initilizeGuardians(
