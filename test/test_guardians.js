@@ -38,7 +38,6 @@ describe("test guardian", function () {
         });
         account = await accountContract.connect(owner).deploy(owner.address); //random useless entryPoint address
         await account.deployed();
-        // await account.connect(owner).initialize(owner.address);
 
         // update verifier contract
         updateVerifierContract = await ethers.getContractFactory("UpdateGuardianVerifier");
@@ -120,7 +119,6 @@ describe("test guardian", function () {
         hashOfNewOwner = poseidon([newOwner]);
 
         for(i = 0; i < Math.floor(guardians.length / 2) + 1; i ++) {
-            // userIdx = i:
             sig = eddsa.signMiMC(prvs[i], hashOfNewOwner);
             res = await tree.find(i + 1); //plus one because of the root
             var { public, proof } = await generateSocialRecoveryProof(
@@ -144,56 +142,6 @@ describe("test guardian", function () {
                 public
             )
         }
-
-        // // use1 recover
-        // userIdx = 0
-        // sig = eddsa.signMiMC(prvs[userIdx], hashOfNewOwner);
-        // res = await tree.find(userIdx + 1); //plus one because of the root
-        // var { public, proof } = await generateSocialRecoveryProof(
-        //   res.siblings,
-        //   pubs[userIdx],
-        //   userIdx + 1, //plus one because of the root
-        //   sig,
-        //   hashOfNewOwner,
-        //   tree.root,
-        // );
-        
-        // a = [proof[0], proof[1]];
-        // b = [[proof[2], proof[3]], [proof[4], proof[5]]];
-        // c = [proof[6], proof[7]];
-
-        // await account.connect(addrs[1]).recover(
-        //     newOwner,
-        //     a,
-        //     b,
-        //     c,
-        //     public
-        // )
-
-        // // use2 recover
-        // userIdx = 1
-        // sig = eddsa.signMiMC(prvs[userIdx], hashOfNewOwner);
-        // res = await tree.find(userIdx + 1);
-        // var { public, proof } = await generateSocialRecoveryProof(
-        //     res.siblings,
-        //     pubs[userIdx],
-        //     userIdx + 1,
-        //     sig,
-        //     hashOfNewOwner,
-        //     tree.root,
-        //   );
-        
-        // a = [proof[0], proof[1]];
-        // b = [[proof[2], proof[3]], [proof[4], proof[5]]];
-        // c = [proof[6], proof[7]];
-
-        // await account.connect(addrs[1]).recover(
-        //     newOwner,
-        //     a,
-        //     b,
-        //     c,
-        //     public
-        // )
 
         owner2 = await account.owner();
         expect(newOwner).to.equal(owner2);

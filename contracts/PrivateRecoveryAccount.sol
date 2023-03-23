@@ -220,9 +220,13 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     ) external returns (bool valid, bool update) {
       require(pendingOwner == address(0) || newOwner == pendingOwner, "Wrong new owner");
       (valid, update) = GuardianStorage.layout().recover(a, b, c, input, newOwner);
-      if(valid && update) {
-        owner = newOwner;
-        pendingOwner = address(0);
+      if(valid) {
+        if (update) {
+          owner = newOwner;
+          pendingOwner = address(0);
+        } else if (pendingOwner == address(0)) {
+            pendingOwner = newOwner;
+        }
       }
     }
 }
