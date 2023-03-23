@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./interfaces/IUpdateGuardianVerifier.sol";
 import "./interfaces/ISocialRecoveryVerifier.sol";
 import "./interfaces/IPoseidonHasher.sol";
-import "hardhat/console.sol";
 
 library GuardianStorage {
   using EnumerableMap for EnumerableMap.UintToUintMap;
@@ -132,17 +131,14 @@ library GuardianStorage {
           l.recover_nullifier_set.set(nullifier, 1);
           (valid, update) = (true, false);
         }
-      } {
+      } else {
         // proof is not valid
-        console.log("proof invalid");
         (valid, update) = (false, false);
       }
     } else {
       // proof is replay
-        console.log("proof replay");
       (valid, update) = (false, false);
     }
-    console.log("valid, update: ", valid, update);
   }
 
   function getGuardians(GuardianStorage.Layout storage l) external view returns (uint[] memory) {

@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "./core/BaseAccount.sol";
 import "./GuardianStorage.sol";
-import "hardhat/console.sol";
 
 /**
   * minimal account.
@@ -55,12 +54,8 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 
-    // For test
-    // constructor(IEntryPoint anEntryPoint) {
-    constructor(address entryPointAddress) {
-        // _entryPoint = anEntryPoint;
-        owner = msg.sender;
-        _entryPoint = IEntryPoint(entryPointAddress);
+    constructor(IEntryPoint anEntryPoint) {
+        _entryPoint = anEntryPoint;
         _disableInitializers();
     }
 
@@ -158,10 +153,22 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
         _onlyOwner();
     }
 
+    /**
+     * get current guardians
+     */
     function getGuardians() external view returns (uint[] memory) {
         return GuardianStorage.layout().getGuardians();
     }
 
+    /**
+     * initialize guardians
+     * @param guardians guardian list
+     * @param vote_threshold threshold to update owner
+     * @param root merkle root
+     * @param updateGuardianVerifierAddress update guardian contract address
+     * @param socialRecoveryVerifierAddress social recovery contract address
+     * @param poseidonContractAddress poseidon hasher contract address
+     */
     function initilizeGuardians(
       uint[] memory guardians,
       uint vote_threshold,
@@ -180,6 +187,13 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       );
     }
 
+    /**
+     * update guardian by a proof
+     * @param a proof parameter
+     * @param b proof parameter
+     * @param c proof parameter
+     * @param input proof input
+     */
     function updateGuardian(
       uint[2] memory a,
       uint[2][2] memory b,
@@ -189,6 +203,14 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       return GuardianStorage.layout().updateGuardian(a, b, c, input);
     }
 
+    /**
+     * recover owner
+     * @param newOwner new owner
+     * @param a proof parameter
+     * @param b proof parameter
+     * @param c proof parameter
+     * @param input proof input
+     */
     function recover(
       address newOwner,
       uint[2] memory a,
