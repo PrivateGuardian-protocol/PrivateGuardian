@@ -62,7 +62,7 @@ const generateSocialRecoveryProof = async (
     const result = await groth16.fullProve(
       input,
       "./hardhat/statics/SocialRecovery.wasm",
-      "./hardhat/statics/SocialRecovery_0000.zkey"
+      "./hardhat/statics/SocialRecovery.zkey"
     );
 
     return {

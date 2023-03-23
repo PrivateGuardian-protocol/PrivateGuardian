@@ -29,6 +29,7 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     //explicit sizes of nonce, to fit a single storage cell with "owner"
     uint96 private _nonce;
     address public owner;
+    address public pendingOwner;
 
     IEntryPoint private immutable _entryPoint;
 
@@ -152,10 +153,22 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
         _onlyOwner();
     }
 
+    /**
+     * get current guardians
+     */
     function getGuardians() external view returns (uint[] memory) {
-        GuardianStorage.layout().getGuardians();
+        return GuardianStorage.layout().getGuardians();
     }
 
+    /**
+     * initialize guardians
+     * @param guardians guardian list
+     * @param vote_threshold threshold to update owner
+     * @param root merkle root
+     * @param updateGuardianVerifierAddress update guardian contract address
+     * @param socialRecoveryVerifierAddress social recovery contract address
+     * @param poseidonContractAddress poseidon hasher contract address
+     */
     function initilizeGuardians(
       uint[] memory guardians,
       uint vote_threshold,
@@ -174,6 +187,13 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       );
     }
 
+    /**
+     * update guardian by a proof
+     * @param a proof parameter
+     * @param b proof parameter
+     * @param c proof parameter
+     * @param input proof input
+     */
     function updateGuardian(
       uint[2] memory a,
       uint[2][2] memory b,
@@ -183,6 +203,14 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       return GuardianStorage.layout().updateGuardian(a, b, c, input);
     }
 
+    /**
+     * recover owner
+     * @param newOwner new owner
+     * @param a proof parameter
+     * @param b proof parameter
+     * @param c proof parameter
+     * @param input proof input
+     */
     function recover(
       address newOwner,
       uint[2] memory a,
@@ -190,9 +218,15 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       uint[2] memory c,
       uint[3] memory input
     ) external returns (bool valid, bool update) {
+      require(pendingOwner == address(0) || newOwner == pendingOwner, "Wrong new owner");
       (valid, update) = GuardianStorage.layout().recover(a, b, c, input, newOwner);
-      if(valid && update) {
-        owner = newOwner;
+      if(valid) {
+        if (update) {
+          owner = newOwner;
+          pendingOwner = address(0);
+        } else if (pendingOwner == address(0)) {
+            pendingOwner = newOwner;
+        }
       }
     }
 }

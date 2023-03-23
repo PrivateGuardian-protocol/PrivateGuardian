@@ -78,18 +78,18 @@ library GuardianStorage {
     uint[2] memory a,
     uint[2][2] memory b,
     uint[2] memory c,
-    uint[6] memory input // oldRoot, indexOfGuardian, oldPubKey[0], oldPubKey[1], newPubKey, newRoot
+    uint[6] memory input //newRoot, oldRoot, indexOfGuardian, oldPubKey[0], oldPubKey[1], newPubKey
   ) external returns (bool) {
     // check root
-    require(uint256(uint160(l.root)) == input[0], "Wrong merkel root");
+    require(l.root == input[1], "Wrong merkel root");
 
     // check proof
     if(l.updateGuardianVerifier.verifyProof(a, b, c, input)) {
       // update guardian
-      l.guardians[input[1]] = input[4];
+      l.guardians[input[2] - 1] = input[5];
 
       // update root
-      l.root = input[5];
+      l.root = input[0];
       return true;
     } else {
       return false;
@@ -101,13 +101,13 @@ library GuardianStorage {
     uint[2] memory a,
     uint[2][2] memory b,
     uint[2] memory c,
-    uint[3] memory input, // hashOfNewOwner, merkleRoot, nullifier
+    uint[3] memory input, //nullifier, hashOfNewOwner, merkleRoot
     address newOwner
   ) external returns (bool valid, bool update) {
     // record of voter
-    uint nullifier = input[2];
+    uint nullifier = input[0];
     uint[1] memory newOwnerUint = [uint256(uint160(newOwner))];
-    require(input[0] == l.hasher.poseidon1(newOwnerUint), "Wrong owner");
+    require(input[1] == l.hasher.poseidon(newOwnerUint), "Wrong owner");
 
     if(!l.recover_nullifier_set.contains(nullifier)) {
       // proof is not replay
@@ -124,14 +124,14 @@ library GuardianStorage {
           }
 
           // update merkle root
-          l.root = input[1];
+          l.root = input[2];
           (valid, update) = (true, true);
         } else {
           // Threshold not reached
           l.recover_nullifier_set.set(nullifier, 1);
           (valid, update) = (true, false);
         }
-      } {
+      } else {
         // proof is not valid
         (valid, update) = (false, false);
       }
