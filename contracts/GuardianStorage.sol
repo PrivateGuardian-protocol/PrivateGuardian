@@ -82,20 +82,17 @@ library GuardianStorage {
     uint[6] memory input //newRoot, oldRoot, indexOfGuardian, oldPubKey[0], oldPubKey[1], newPubKey
   ) external returns (bool) {
     // check root
-    console.log("in solidity old root: ", l.root);
     require(l.root == input[1], "Wrong merkel root");
 
     // check proof
     if(l.updateGuardianVerifier.verifyProof(a, b, c, input)) {
       // update guardian
-      l.guardians[input[2]] = input[5];
+      l.guardians[input[2] - 1] = input[5];
 
       // update root
       l.root = input[0];
-      console.log("valid");
       return true;
     } else {
-      console.log("invalid");
       return false;
     }
   }
@@ -111,7 +108,7 @@ library GuardianStorage {
     // record of voter
     uint nullifier = input[0];
     uint[1] memory newOwnerUint = [uint256(uint160(newOwner))];
-    require(input[1] == l.hasher.poseidon1(newOwnerUint), "Wrong owner");
+    require(input[1] == l.hasher.poseidon(newOwnerUint), "Wrong owner");
 
     if(!l.recover_nullifier_set.contains(nullifier)) {
       // proof is not replay
@@ -137,12 +134,15 @@ library GuardianStorage {
         }
       } {
         // proof is not valid
+        console.log("proof invalid");
         (valid, update) = (false, false);
       }
     } else {
       // proof is replay
+        console.log("proof replay");
       (valid, update) = (false, false);
     }
+    console.log("valid, update: ", valid, update);
   }
 
   function getGuardians(GuardianStorage.Layout storage l) external view returns (uint[] memory) {

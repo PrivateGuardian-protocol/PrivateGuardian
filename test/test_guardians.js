@@ -6,11 +6,14 @@ const {
   generateUpdateGuardianProof,
   generateSocialRecoveryProof
 } = require("./Utils");
+const { BigNumber } = require("ethers");
 
 describe.only("test guardian", function () {
     let poseidonContract;
     let account;
     let tree;
+    let prvs;
+    let pubs;
     let guards;
     beforeEach(async function () {
         [owner, ...addrs] = await ethers.getSigners();
@@ -26,7 +29,6 @@ describe.only("test guardian", function () {
         guardianStorageFactory = await ethers.getContractFactory("GuardianStorage");
         guardianStorageLib = await guardianStorageFactory.deploy();
         await guardianStorageLib.deployed()
-        console.log("storage: " + guardianStorageLib.address);
 
         // private recovery account contract
         accountContract = await ethers.getContractFactory("PrivateRecoveryAccount", {
@@ -37,9 +39,6 @@ describe.only("test guardian", function () {
         account = await accountContract.connect(owner).deploy(owner.address); //random useless entryPoint address
         await account.deployed();
         // await account.connect(owner).initialize(owner.address);
-        console.log("account: " + account.address);
-        nonce = await account.nonce();
-        console.log("nonce: " + nonce);
 
         // update verifier contract
         updateVerifierContract = await ethers.getContractFactory("UpdateGuardianVerifier");
@@ -55,16 +54,18 @@ describe.only("test guardian", function () {
         prvA = genPrivKey().toString();
         prvB = genPrivKey().toString();
         prvC = genPrivKey().toString();
-        pubA = eddsa.prv2pub(prvA)[0];
-        pubB = eddsa.prv2pub(prvB)[0];
-        pubC = eddsa.prv2pub(prvC)[0];
+        pubA = eddsa.prv2pub(prvA);
+        pubB = eddsa.prv2pub(prvB);
+        pubC = eddsa.prv2pub(prvC);
         tree = await smt.newMemEmptyTrie();
         await tree.insert(0, owner.address);
         await tree.insert(1, eddsa.prv2pub(prvA)[0]);
         await tree.insert(2, eddsa.prv2pub(prvB)[0]);
         await tree.insert(3, eddsa.prv2pub(prvC)[0]);
 
-        guards = [pubA, pubB, pubC];
+        prvs = [prvA, prvB, prvC];
+        pubs = [pubA, pubB, pubC];
+        guards = [pubA[0], pubB[0], pubC[0]];
         await account.connect(owner).initilizeGuardians(
             guards,
             2,
@@ -73,30 +74,26 @@ describe.only("test guardian", function () {
             recoverVerifier.address,
             poseidonContract.address
         );
-        console.log("old root: ", tree.root);
     });
 
-    it("Change guardian", async function() {
-        
+    it("update guardian", async function() {
         oldGuardians = await account.getGuardians();
-        console.log("old guardians: ", oldGuardians);
 
-        alterIdx = 1
-        pubToBeAltered = guards[alterIdx];
-        prvToBeAltered = guards[alterIdx];
+        updateIdx = 1
+        prvToBeUpdated = prvs[updateIdx];
+        pubToBeUpdated = guards[updateIdx];
 
         newPrv = genPrivKey().toString();
         newPub = eddsa.prv2pub(newPrv);
-        const sig = eddsa.signMiMC(prvToBeAltered, newPub[0]);
-        const res = await tree.update(alterIdx + 1, newPub[0]);
-        console.log("new guardian: ", newPub[0]);
+        const sig = eddsa.signMiMC(prvToBeUpdated, newPub[0]);
+        const res = await tree.update(updateIdx + 1, newPub[0]);
         
-        const { public, proof } = await generateUpdateGuardianProof(
+        var { public, proof } = await generateUpdateGuardianProof(
           res.siblings,
           sig, // priv: old sign new
           res.oldRoot, // pub
           res.oldKey,
-          eddsa.prv2pub(prvToBeAltered), // pub
+          eddsa.prv2pub(prvToBeUpdated), // pub
           newPub,
         );
 
@@ -104,10 +101,76 @@ describe.only("test guardian", function () {
         const b = [[proof[2], proof[3]], [proof[4], proof[5]]];
         const c = [proof[6], proof[7]];
 
-        console.log(public);
-        console.log("old root2: ", res.oldRoot);
         await account.updateGuardian(a, b, c, public);
         newGuardians = await account.getGuardians();
-        console.log("new guardians: ", newGuardians);
+
+        for(i = 0; i < oldGuardians.length; i++) {
+            if(i == updateIdx) {
+                expect(newGuardians[i]).to.equal(BigNumber.from(newPub[0]));
+            } else {
+                expect(newGuardians[i]).to.equal(oldGuardians[i]);
+            }
+        }
+    })
+
+    it("social recover", async function() {
+        guardians = await account.getGuardians();
+        oldOwner = await account.owner();
+        newOwner = addrs[3].address;
+        hashOfNewOwner = poseidon([newOwner]);
+
+        // use1 recover
+        userIdx = 0
+        sig = eddsa.signMiMC(prvs[userIdx], hashOfNewOwner);
+        res = await tree.find(userIdx + 1); //plus one because of the root
+        var { public, proof } = await generateSocialRecoveryProof(
+          res.siblings,
+          pubs[userIdx],
+          userIdx + 1, //plus one because of the root
+          sig,
+          hashOfNewOwner,
+          tree.root,
+        );
+        
+        a = [proof[0], proof[1]];
+        b = [[proof[2], proof[3]], [proof[4], proof[5]]];
+        c = [proof[6], proof[7]];
+
+        await account.connect(addrs[1]).recover(
+            newOwner,
+            a,
+            b,
+            c,
+            public
+        )
+
+        // use2 recover
+        userIdx = 1
+        sig = eddsa.signMiMC(prvs[userIdx], hashOfNewOwner);
+        res = await tree.find(userIdx + 1);
+        var { public, proof } = await generateSocialRecoveryProof(
+            res.siblings,
+            pubs[userIdx],
+            userIdx + 1,
+            sig,
+            hashOfNewOwner,
+            tree.root,
+          );
+        
+        a = [proof[0], proof[1]];
+        b = [[proof[2], proof[3]], [proof[4], proof[5]]];
+        c = [proof[6], proof[7]];
+
+        await account.connect(addrs[1]).recover(
+            newOwner,
+            a,
+            b,
+            c,
+            public
+        )
+
+        owner2 = await account.owner();
+        console.log(oldOwner, newOwner, owner2);
+        expect(newOwner).to.equal(owner2);
     })
 });

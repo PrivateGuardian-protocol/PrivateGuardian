@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "./core/BaseAccount.sol";
 import "./GuardianStorage.sol";
+import "hardhat/console.sol";
 
 /**
   * minimal account.
@@ -29,6 +30,7 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     //explicit sizes of nonce, to fit a single storage cell with "owner"
     uint96 private _nonce;
     address public owner;
+    address public pendingOwner;
 
     IEntryPoint private immutable _entryPoint;
 
@@ -57,7 +59,8 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
     // constructor(IEntryPoint anEntryPoint) {
     constructor(address entryPointAddress) {
         // _entryPoint = anEntryPoint;
-         _entryPoint = IEntryPoint(entryPointAddress);
+        owner = msg.sender;
+        _entryPoint = IEntryPoint(entryPointAddress);
         _disableInitializers();
     }
 
@@ -193,9 +196,11 @@ contract PrivateRecoveryAccount is BaseAccount, UUPSUpgradeable, Initializable {
       uint[2] memory c,
       uint[3] memory input
     ) external returns (bool valid, bool update) {
+      require(pendingOwner == address(0) || newOwner == pendingOwner, "Wrong new owner");
       (valid, update) = GuardianStorage.layout().recover(a, b, c, input, newOwner);
       if(valid && update) {
         owner = newOwner;
+        pendingOwner = address(0);
       }
     }
 }
