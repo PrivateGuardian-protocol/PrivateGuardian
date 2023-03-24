@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "PrivateGuardian to create and verify zero-knowledge proofs for contract wallet guardian.",
   "scripts": {
-    "test": "npx hardhat test",
-    "deploy-local": "npx hardhat run scripts/thirdweb.js --network localhost && npx hardhat run scripts/verifier.js --network localhost"
+    "test": "npx hardhat test"
   },
   "repository": {
     "type": "git",
