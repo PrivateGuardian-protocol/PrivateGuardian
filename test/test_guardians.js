@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, deployments } = require("hardhat");
 const { poseidon_gencontract, poseidon, eddsa, smt } = require("circomlibjs")
 const { genPrivKey } = require("maci-crypto");
 const {
@@ -17,14 +17,13 @@ describe("test guardian", function () {
     let guards;
     beforeEach(async function () {
         [owner, ...addrs] = await ethers.getSigners();
-
         // poseidon contract
         const poseidonT3ABI = poseidon_gencontract.generateABI(1);
         const poseidonT3Bytecode = poseidon_gencontract.createCode(1);
         const PoseidonContract = new ethers.ContractFactory(poseidonT3ABI, poseidonT3Bytecode, owner);
         poseidonContract = await PoseidonContract.deploy();
         await poseidonContract.deployed();
-        
+
         // guardian storage contract
         guardianStorageFactory = await ethers.getContractFactory("GuardianStorage");
         guardianStorageLib = await guardianStorageFactory.deploy();
@@ -86,7 +85,7 @@ describe("test guardian", function () {
         newPub = eddsa.prv2pub(newPrv);
         const sig = eddsa.signMiMC(prvToBeUpdated, newPub[0]);
         const res = await tree.update(updateIdx + 1, newPub[0]);
-        
+
         var { public, proof } = await generateUpdateGuardianProof(
           res.siblings,
           sig, // priv: old sign new
@@ -120,7 +119,9 @@ describe("test guardian", function () {
 
         for(i = 0; i < Math.floor(guardians.length / 2) + 1; i ++) {
             sig = eddsa.signMiMC(prvs[i], hashOfNewOwner);
+            console.log("🚀 ~ file: test_guardians.js:121 ~ it ~ sig:", sig)
             res = await tree.find(i + 1); //plus one because of the root
+            console.log("🚀 ~ file: test_guardians.js:123 ~ it ~ res:", res)
             var { public, proof } = await generateSocialRecoveryProof(
             res.siblings,
             pubs[i],
@@ -129,11 +130,12 @@ describe("test guardian", function () {
             hashOfNewOwner,
             tree.root,
             );
-            
+
             a = [proof[0], proof[1]];
             b = [[proof[2], proof[3]], [proof[4], proof[5]]];
             c = [proof[6], proof[7]];
 
+            // Call recover from arbitrary eoa account
             await account.connect(addrs[1]).recover(
                 newOwner,
                 a,
