@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers, deployments } = require("hardhat");
+const { ethers } = require("hardhat");
 const { poseidon_gencontract, poseidon, eddsa, smt } = require("circomlibjs")
 const { genPrivKey } = require("maci-crypto");
 const {
@@ -119,9 +119,7 @@ describe("test guardian", function () {
 
         for(i = 0; i < Math.floor(guardians.length / 2) + 1; i ++) {
             sig = eddsa.signMiMC(prvs[i], hashOfNewOwner);
-            console.log("🚀 ~ file: test_guardians.js:121 ~ it ~ sig:", sig)
             res = await tree.find(i + 1); //plus one because of the root
-            console.log("🚀 ~ file: test_guardians.js:123 ~ it ~ res:", res)
             var { public, proof } = await generateSocialRecoveryProof(
             res.siblings,
             pubs[i],

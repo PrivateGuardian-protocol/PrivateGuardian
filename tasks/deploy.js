@@ -1,4 +1,5 @@
 const { task, types } = require("hardhat/config");
+const circomlibjs = require("circomlibjs")
 
 task("deploy", "Deploy Guardian verifier contract")
     // .addParam("merkleRoot", "Merkle Root of SMT ", undefined, types.string)
@@ -8,7 +9,8 @@ task("deploy", "Deploy Guardian verifier contract")
     // .addOptionalParam("socialRecoveryVerifier", "SocialRecoveryVerifier contract address", undefined, types.string)
     .setAction(async ({ updateGuardianVerifier, socialRecoveryVerifier, privateRecoveryAccountFactory }, { ethers }) => {
 
-        if (!updateGuardianVerifier) {
+  const [signer] = await ethers.getSigners();
+  if (!updateGuardianVerifier) {
             const UpdateGuardianVerifier = await ethers.getContractFactory("UpdateGuardianVerifier");
             const _updateGuardianVerifier = await UpdateGuardianVerifier.deploy();
             await _updateGuardianVerifier.deployed();
@@ -38,6 +40,13 @@ task("deploy", "Deploy Guardian verifier contract")
           privateRecoveryAccountFactory = _privateRecoveryAccountFactory.address;
           console.log(`deploy private recovery account factory to testnet in ${privateRecoveryAccountFactory}`);
         }
+
+        const poseidonT3ABI = circomlibjs.poseidon_gencontract.generateABI(1);
+        const poseidonT3Bytecode = circomlibjs.poseidon_gencontract.createCode(1);
+        const PoseidonLibT3Factory = new ethers.ContractFactory(poseidonT3ABI, poseidonT3Bytecode, signer);
+        const poseidonT3Lib = await PoseidonLibT3Factory.deploy();
+        await poseidonT3Lib.deployed();
+        console.log(`PoseidonT3 library has been deployed to: ${poseidonT3Lib.address}`);
 
         // get deployed instances
         const updateGuardianVerifierIns = await hre.ethers.getContractAt("UpdateGuardianVerifier", updateGuardianVerifier);
