@@ -1,8 +1,8 @@
 #!/bin/bash
 
-algo=$1
-version=$2
-names=("${@:3}")
+algo=groth16
+version=15
+names=(SocialRecovery UpdateGuardian)
 
 for name in "${names[@]}"; do
   cd circuits
@@ -19,12 +19,12 @@ for name in "${names[@]}"; do
     mkdir -p ./compile/trust_setup
     cd ./compile/trust_setup
     echo "Downloading powersOfTau28_hez_final_${version}.ptau"
-    wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${version}.ptau
+    curl -o ./powersOfTau28_hez_final_${version}.ptau https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${version}.ptau
     cd ../..
   fi
 
   snarkjs ${algo} setup ./compile/${name}.r1cs ./compile/trust_setup/powersOfTau28_hez_final_${version}.ptau ./compile/${name}_0000.zkey
-  snarkjs zkey contribute ./compile/${name}_0000.zkey ./compile/${name}.zkey --name="1st Contributor Name" -v -e="random text xxxxxx"
+  snarkjs zkey contribute ./compile/${name}_0000.zkey ./compile/${name}.zkey --name="1st Contributor Name" -v -e="random text for trusted setup"
 
   cp ./compile/${name}.zkey ../statics
   mkdir -p ./compile/frontend
